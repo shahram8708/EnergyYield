@@ -155,6 +155,9 @@ class AISummary(db.Model):
     device_id = db.Column(db.String(64), db.ForeignKey("devices.device_id"), index=True, nullable=False)
     generated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
     summary_json = db.Column(db.Text, nullable=False)
+    explanation_raw = db.Column(db.Text, nullable=True)
+    explanation_html = db.Column(db.Text, nullable=True)
+    recommendations_html = db.Column(db.Text, nullable=True)
 
 
 class Alert(db.Model):
@@ -165,6 +168,7 @@ class Alert(db.Model):
     severity = db.Column(db.String(16), nullable=False, default="info")
     title = db.Column(db.String(255), nullable=False)
     detail = db.Column(db.Text, nullable=True)
+    detail_html = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
     cleared = db.Column(db.Boolean, nullable=False, default=False)
 

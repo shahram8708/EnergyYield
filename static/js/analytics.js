@@ -7,6 +7,18 @@
 
   const labelIds = ['analyticsDeviceLabel'];
 
+  function ensureMatrixController() {
+    const already = Chart.registry?.getController?.('matrix');
+    if (already) return true;
+    const matrixPlugin = window['chartjs-chart-matrix'];
+    if (matrixPlugin?.MatrixController && matrixPlugin?.MatrixElement) {
+      Chart.register(matrixPlugin.MatrixController, matrixPlugin.MatrixElement);
+      return true;
+    }
+    console.error('Chart.js matrix controller not available');
+    return false;
+  }
+
   function setDevice(deviceId) {
     currentDeviceId = deviceId;
     window.appConfig = window.appConfig || {};
@@ -52,6 +64,7 @@
   async function loadHeatmap() {
     const canvas = document.getElementById('heatmapChart');
     if (!canvas || !currentDeviceId) return;
+    if (!ensureMatrixController()) return;
     try {
       const res = await fetch(`/api/analytics/heatmap/${encodeURIComponent(currentDeviceId)}`);
       if (!res.ok) return;

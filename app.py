@@ -76,6 +76,16 @@ def _apply_schema_updates() -> None:
         db.session.execute(text("ALTER TABLE device_settings ADD COLUMN motor_power_w FLOAT"))
     if "hold_power_w" not in ds_cols:
         db.session.execute(text("ALTER TABLE device_settings ADD COLUMN hold_power_w FLOAT"))
+    ai_cols = [row[1] for row in db.session.execute(text("PRAGMA table_info(ai_summary)"))]
+    if "explanation_raw" not in ai_cols:
+        db.session.execute(text("ALTER TABLE ai_summary ADD COLUMN explanation_raw TEXT"))
+    if "explanation_html" not in ai_cols:
+        db.session.execute(text("ALTER TABLE ai_summary ADD COLUMN explanation_html TEXT"))
+    if "recommendations_html" not in ai_cols:
+        db.session.execute(text("ALTER TABLE ai_summary ADD COLUMN recommendations_html TEXT"))
+    alert_cols = [row[1] for row in db.session.execute(text("PRAGMA table_info(alerts)"))]
+    if "detail_html" not in alert_cols:
+        db.session.execute(text("ALTER TABLE alerts ADD COLUMN detail_html TEXT"))
     db.session.commit()
 
 

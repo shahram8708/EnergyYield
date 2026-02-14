@@ -5,3 +5,5 @@ gunicorn
 numpy
 pandas
 google-genai
+markdown
+bleach

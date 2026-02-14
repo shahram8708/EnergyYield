@@ -28,7 +28,7 @@
       const card = document.createElement('div');
       const badgeClass = a.severity === 'critical' ? 'danger' : (a.severity === 'warn' ? 'warning' : 'info');
       card.className = `alert alert-${badgeClass} d-flex justify-content-between align-items-start`;
-      card.innerHTML = `<div><div class="fw-semibold">${a.title}</div><div class="small">${a.detail || ''}</div><div class="small text-muted">${new Date(a.created_at).toLocaleString()}</div></div>`;
+      card.innerHTML = `<div><div class="fw-semibold">${a.title}</div><div class="ai-content small mb-1">${a.detail_html || ''}</div><div class="small text-muted">${new Date(a.created_at).toLocaleString()}</div></div>`;
       const btn = document.createElement('button');
       btn.className = 'btn btn-sm btn-outline-secondary ms-2';
       btn.textContent = 'Clear';
@@ -45,16 +45,22 @@
     const container = document.getElementById('recommendationsList');
     if (!container) return;
     container.innerHTML = '';
+    if (typeof recs === 'string') {
+      container.innerHTML = `<div class="ai-content">${recs}</div>`;
+      return;
+    }
     if (!recs || recs.length === 0) {
       container.innerHTML = '<div class="text-muted">No recommendations yet.</div>';
       return;
     }
+    const list = document.createElement('ul');
+    list.className = 'ai-content mb-0 ps-3';
     recs.forEach((r) => {
-      const div = document.createElement('div');
-      div.className = 'recommendation-item';
-      div.innerHTML = `<i class="fa-solid fa-circle-check text-success me-2"></i>${r}`;
-      container.appendChild(div);
+      const li = document.createElement('li');
+      li.textContent = r;
+      list.appendChild(li);
     });
+    container.appendChild(list);
   }
 
   function renderFaults(faults) {
@@ -152,11 +158,18 @@
     updateProgress('rtcScoreBar', 'rtcScoreLabel', rtcScore);
     renderResetChart(data.reset_frequency || (diag.power_rail ? diag.power_rail.reset_frequency : 0) || 0);
 
-    if (data.explanation) {
-      document.getElementById('explainerText').textContent = data.explanation;
+    if (data.explanation_html || data.explanation) {
+      const explainer = document.getElementById('explainerText');
+      if (explainer) {
+        if (data.explanation_html) {
+          explainer.innerHTML = data.explanation_html;
+        } else {
+          explainer.textContent = data.explanation || '';
+        }
+      }
     }
 
-    renderRecommendations(data.recommendations || []);
+    renderRecommendations(data.recommendations_html || data.recommendations || []);
     renderFaults(data.faults || []);
   }
 

@@ -1,8 +1,9 @@
 import math
 import os
 import time
+import json
 from collections import deque
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Deque, Dict, Tuple
 
 from werkzeug.security import generate_password_hash
@@ -19,10 +20,24 @@ def _build_app():
 
 def seed_database() -> None:
     """Idempotent bootstrap seeding for local dev and simulator."""
-    from models import Device, DeviceSettings, User
+    from models import (
+        AISummary,
+        Alert,
+        CleaningLog,
+        Command,
+        DailySummary,
+        Device,
+        DeviceFaultLog,
+        DeviceSettings,
+        Event,
+        MovementLog,
+        SlotStatistic,
+        Telemetry,
+        User,
+    )
 
-    admin_email = os.environ.get("SEED_ADMIN_EMAIL", "admin@example.com")
-    admin_password = os.environ.get("SEED_ADMIN_PASSWORD", "admin123")
+    admin_email = os.environ.get("SEED_ADMIN_EMAIL", "admin@energy.yield")
+    admin_password = os.environ.get("SEED_ADMIN_PASSWORD", "EnergyYield@")
     admin_name = os.environ.get("SEED_ADMIN_NAME", "Admin")
     seed_device_id = os.environ.get("SIMULATOR_DEVICE_ID", "AEY-SIM-001")
     seed_api_key = os.environ.get("SIMULATOR_API_KEY", "SIM-LOCAL-KEY")
@@ -46,6 +61,8 @@ def seed_database() -> None:
             api_key=seed_api_key,
             user_id=admin.id,
             is_active=True,
+            last_ip="127.0.0.1",
+            firmware_version="1.0.0",
         )
         db.session.add(device)
     else:
@@ -53,6 +70,8 @@ def seed_database() -> None:
             device.user_id = admin.id
         if not device.api_key:
             device.api_key = seed_api_key
+        if not device.firmware_version:
+            device.firmware_version = "1.0.0"
 
     settings = DeviceSettings.query.filter_by(device_id=device.device_id).first()
     if not settings:
@@ -65,6 +84,179 @@ def seed_database() -> None:
             hold_power_w=2.0,
         )
         db.session.add(settings)
+
+    # Minimal telemetry history if none exists
+    if Telemetry.query.filter_by(device_id=device.device_id).count() == 0:
+        base_ts = datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+        samples = [
+            {
+                "seq": 1,
+                "slot": 480,
+                "angle_deg": 95.0,
+                "sun": 0.32,
+            },
+            {
+                "seq": 2,
+                "slot": 540,
+                "angle_deg": 90.0,
+                "sun": 0.62,
+            },
+            {
+                "seq": 3,
+                "slot": 600,
+                "angle_deg": 88.0,
+                "sun": 0.85,
+            },
+        ]
+        for sample in samples:
+            sun = sample["sun"]
+            ts = base_ts - timedelta(minutes=(600 - sample["slot"]))
+            db.session.add(
+                Telemetry(
+                    device_id=device.device_id,
+                    seq=sample["seq"],
+                    ts=ts,
+                    slot=sample["slot"],
+                    v_panel=17.5 + sun * 2.0,
+                    i_panel=0.4 + sun * 0.5,
+                    p_w=6.0 + sun * 4.0,
+                    e_wh_today=sample["seq"] * 12.0,
+                    angle_deg=sample["angle_deg"],
+                    mode=settings.mode,
+                    move_count_today=sample["seq"] - 1,
+                    v_sys_5v=5.02,
+                    acs_offset_v=2.52,
+                    rssi=-52,
+                    fault_flags=0,
+                )
+            )
+
+    if Event.query.filter_by(device_id=device.device_id).count() == 0:
+        now = datetime.utcnow()
+        events = [
+            Event(
+                device_id=device.device_id,
+                ts=now - timedelta(minutes=15),
+                event_type="move",
+                data_json=json.dumps({"from": 92.0, "to": 88.0, "reason": "sun_tracking"}),
+            ),
+            Event(
+                device_id=device.device_id,
+                ts=now - timedelta(hours=2),
+                event_type="cleaning",
+                data_json=json.dumps({"method": "manual_rinse", "efficiency_before": 0.74, "efficiency_after": 1.0}),
+            ),
+        ]
+        db.session.add_all(events)
+
+    if Command.query.filter_by(device_id=device.device_id).count() == 0:
+        db.session.add(
+            Command(
+                device_id=device.device_id,
+                cmd="set_mode",
+                args_json=json.dumps({"mode": "auto"}),
+                sent=True,
+                acknowledged=True,
+                acknowledged_at=datetime.utcnow(),
+            )
+        )
+
+    if CleaningLog.query.filter_by(device_id=device.device_id).count() == 0:
+        db.session.add(
+            CleaningLog(
+                device_id=device.device_id,
+                cleaned_at=datetime.utcnow() - timedelta(days=1),
+                cleaning_type="manual",
+                note="Daily rinse",
+                energy_before_wh=180.0,
+                energy_after_wh=210.0,
+                improvement_percent=16.7,
+            )
+        )
+
+    if SlotStatistic.query.filter_by(device_id=device.device_id).count() == 0:
+        db.session.add_all(
+            [
+                SlotStatistic(
+                    device_id=device.device_id,
+                    slot=540,
+                    angle_deg=90.0,
+                    sample_count=8,
+                    avg_power=7.8,
+                    std_power=0.3,
+                ),
+                SlotStatistic(
+                    device_id=device.device_id,
+                    slot=600,
+                    angle_deg=88.0,
+                    sample_count=8,
+                    avg_power=8.9,
+                    std_power=0.4,
+                ),
+            ]
+        )
+
+    if DailySummary.query.filter_by(device_id=device.device_id, date=date.today()).first() is None:
+        db.session.add(
+            DailySummary(
+                device_id=device.device_id,
+                date=date.today(),
+                energy_wh=240.0,
+                move_count=14,
+                efficiency_ratio=0.92,
+            )
+        )
+
+    if MovementLog.query.filter_by(device_id=device.device_id).count() == 0:
+        db.session.add(
+            MovementLog(
+                device_id=device.device_id,
+                ts=datetime.utcnow() - timedelta(minutes=20),
+                from_angle=94.0,
+                to_angle=88.0,
+                move_duration_sec=1.8,
+                motor_estimated_power_w=50.0,
+                energy_cost_wh=0.025,
+                triggered_by="sun_tracking",
+            )
+        )
+
+    if AISummary.query.filter_by(device_id=device.device_id).count() == 0:
+        db.session.add(
+            AISummary(
+                device_id=device.device_id,
+                generated_at=datetime.utcnow() - timedelta(minutes=10),
+                summary_json=json.dumps({"energy_wh": 240, "moves": 14, "notes": "Stable performance"}),
+                explanation_raw="Panel maintained optimal tilt for most daylight.",
+                explanation_html="<p>Panel maintained optimal tilt for most daylight.</p>",
+                recommendations_html="<ul><li>Consider cleaning after rain.</li></ul>",
+            )
+        )
+
+    if Alert.query.filter_by(device_id=device.device_id).count() == 0:
+        db.session.add(
+            Alert(
+                device_id=device.device_id,
+                severity="info",
+                title="Demo alert",
+                detail="Sample alert for dashboard wiring",
+                detail_html="<p>Sample alert for dashboard wiring</p>",
+                created_at=datetime.utcnow() - timedelta(hours=3),
+                cleared=False,
+            )
+        )
+
+    if DeviceFaultLog.query.filter_by(device_id=device.device_id).count() == 0:
+        db.session.add(
+            DeviceFaultLog(
+                device_id=device.device_id,
+                ts=datetime.utcnow() - timedelta(hours=5),
+                fault_type="sensor_fault",
+                details_json=json.dumps({"i_panel": 0.05, "note": "zero_current_under_sun"}),
+                correlated_move_id=None,
+                severity="warning",
+            )
+        )
 
     db.session.commit()
 

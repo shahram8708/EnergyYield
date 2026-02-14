@@ -27,6 +27,7 @@ from models import (
     SlotStatistic,
     Telemetry,
 )
+from utils.markdown_render import render_markdown
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -88,14 +89,22 @@ def _enforce_data_source(device: Device) -> None:
         abort(403, description="Simulator ingestion disabled in device mode")
 
 
+def _dialect_name() -> str:
+    bind = db.session.get_bind()
+    if bind:
+        return bind.dialect.name
+    engine = db.get_engine(current_app)
+    return engine.dialect.name
+
+
 def _minute_bucket(column):
-    if db.session.bind.dialect.name == "sqlite":
+    if _dialect_name() == "sqlite":
         return func.strftime("%Y-%m-%d %H:%M:00", column)
     return func.date_trunc("minute", column)
 
 
 def _day_bucket(column):
-    if db.session.bind.dialect.name == "sqlite":
+    if _dialect_name() == "sqlite":
         return func.date(column)
     return func.date_trunc("day", column)
 
@@ -422,6 +431,15 @@ def latest_ai_summary(device_id: str):
         payload = json.loads(summary.summary_json)
     except json.JSONDecodeError:
         payload = summary.summary_json
+    if isinstance(payload, dict):
+        # ensure sanitized HTML is available and raw text is not exposed
+        payload.pop("explanation", None)
+        if not payload.get("explanation_html"):
+            payload["explanation_html"] = summary.explanation_html or render_markdown(summary.explanation_raw or "")
+        if not payload.get("recommendations_html"):
+            payload["recommendations_html"] = summary.recommendations_html or render_markdown(
+                "\n".join(f"- {rec}" for rec in payload.get("recommendations", [])) if payload.get("recommendations") else ""
+            )
     return jsonify(payload)
 
 
@@ -429,18 +447,19 @@ def latest_ai_summary(device_id: str):
 def get_alerts(device_id: str):
     _owned_device_or_abort(device_id)
     alerts = Alert.query.filter_by(device_id=device_id, cleared=False).order_by(Alert.created_at.desc()).all()
-    return jsonify(
-        [
+    payload = []
+    for a in alerts:
+        detail_html = a.detail_html or render_markdown(a.detail or "")
+        payload.append(
             {
                 "id": a.id,
                 "severity": a.severity,
                 "title": a.title,
-                "detail": a.detail,
+                "detail_html": detail_html,
                 "created_at": a.created_at.isoformat() if a.created_at else None,
             }
-            for a in alerts
-        ]
-    )
+        )
+    return jsonify(payload)
 
 
 @api_bp.route("/alerts/clear/<int:alert_id>", methods=["POST"])
@@ -534,10 +553,31 @@ def command_ack():
 
 @api_bp.route("/latest/<device_id>", methods=["GET"])
 def latest_telemetry(device_id: str):
-    _owned_device_or_abort(device_id)
+    device = _owned_device_or_abort(device_id)
     telemetry = Telemetry.query.filter_by(device_id=device_id).order_by(Telemetry.ts.desc()).first()
     if not telemetry:
-        abort(404, description="No telemetry found")
+        return jsonify(
+            {
+                "device_id": device.device_id,
+                "seq": None,
+                "ts": None,
+                "slot": None,
+                "v_panel": None,
+                "i_panel": None,
+                "p_w": None,
+                "e_wh_today": None,
+                "angle_deg": None,
+                "mode": None,
+                "move_count_today": None,
+                "v_sys_5v": None,
+                "acs_offset_v": None,
+                "rssi": None,
+                "fault_flags": None,
+                "last_seen": device.last_seen.isoformat() if device.last_seen else None,
+                "status": _device_status(device),
+                "has_data": False,
+            }
+        )
 
     data = {
         "device_id": telemetry.device_id,

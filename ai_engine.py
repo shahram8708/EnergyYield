@@ -11,6 +11,7 @@ from google.genai import types
 from sqlalchemy import and_, func
 
 from database import db
+from utils.markdown_render import render_markdown
 from models import (
     AISummary,
     Alert,
@@ -389,8 +390,15 @@ def _raise_alert(device_id: str, severity: str, title: str, detail: str) -> Aler
     )
     if existing:
         existing.detail = detail
+        existing.detail_html = render_markdown(detail)
         return existing
-    alert = Alert(device_id=device_id, severity=severity, title=title, detail=detail)
+    alert = Alert(
+        device_id=device_id,
+        severity=severity,
+        title=title,
+        detail=detail,
+        detail_html=render_markdown(detail),
+    )
     db.session.add(alert)
     return alert
 
@@ -442,7 +450,12 @@ def _call_gemini_explainer(metrics: Dict[str, Any]) -> Optional[str]:
         return None
 
 
-def _assemble_summary(device: Device, metrics: Dict[str, Any], explanation: Optional[str]) -> Dict[str, Any]:
+def _assemble_summary(
+    device: Device,
+    metrics: Dict[str, Any],
+    explanation_html: Optional[str],
+    recommendations_html: Optional[str],
+) -> Dict[str, Any]:
     latest = Telemetry.query.filter_by(device_id=device.device_id).order_by(Telemetry.ts.desc()).first()
     today_energy = 0.0
     move_count = 0
@@ -492,7 +505,8 @@ def _assemble_summary(device: Device, metrics: Dict[str, Any], explanation: Opti
         "recommendations": metrics.get("recommendations", []),
         "recommended_action": metrics.get("recommendations", [None])[0],
         "forecast": metrics.get("forecast", {}),
-        "explanation": explanation,
+        "explanation_html": explanation_html,
+        "recommendations_html": recommendations_html,
         "reset_frequency": metrics["power_rail"].get("reset_frequency", 0),
         "rtc_reliability_score": metrics["rtc"].get("rtc_reliability_score", 100),
         "power_rail_risk": metrics["power_rail"].get("power_rail_risk", 0.0),
@@ -551,8 +565,19 @@ def run_ai_jobs() -> None:
             metrics["recommendations"] = recommendations
 
             explanation = _call_gemini_explainer(metrics)
-            summary = _assemble_summary(device, metrics, explanation)
-            summary_row = AISummary(device_id=device.device_id, summary_json=json.dumps(summary))
+            explanation_raw = explanation or None
+            explanation_html = render_markdown(explanation_raw) if explanation_raw else ""
+            recommendations_md = "\n".join(f"- {rec}" for rec in recommendations) if recommendations else "_No recommendations available._"
+            recommendations_html = render_markdown(recommendations_md)
+
+            summary = _assemble_summary(device, metrics, explanation_html, recommendations_html)
+            summary_row = AISummary(
+                device_id=device.device_id,
+                summary_json=json.dumps(summary),
+                explanation_raw=explanation_raw,
+                explanation_html=explanation_html,
+                recommendations_html=recommendations_html,
+            )
             db.session.add(summary_row)
         except Exception:  # noqa: BLE001
             logger.exception("AI job failed for device %s", device.device_id)
