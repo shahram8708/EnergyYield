@@ -5,7 +5,6 @@ __pycache__/
 *.log
 logs/
 .env
-.env.*
 venv/
 .venv/
 .env.bak
