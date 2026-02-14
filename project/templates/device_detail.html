@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <h3 class="me-3">Device {{ device.device_id }}</h3>
+  <span class="badge bg-info text-dark">Detail</span>
+  <a class="btn btn-sm btn-outline-secondary ms-auto" href="/device/{{ device.device_id }}/settings">Settings</a>
+</div>
+<div class="row g-3 mb-3">
+  <div class="col-md-2 col-sm-4">
+    <div class="card mini-card">
+      <div class="card-body">
+        <div class="text-muted">Voltage</div>
+        <div class="h4" id="v_panel">{{ '%.2f'|format(latest.v_panel) if latest else '—' }} V</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2 col-sm-4">
+    <div class="card mini-card">
+      <div class="card-body">
+        <div class="text-muted">Current</div>
+        <div class="h4" id="i_panel">{{ '%.2f'|format(latest.i_panel) if latest else '—' }} A</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2 col-sm-4">
+    <div class="card mini-card">
+      <div class="card-body">
+        <div class="text-muted">Power</div>
+        <div class="h4" id="p_w">{{ '%.2f'|format(latest.p_w) if latest else '—' }} W</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2 col-sm-4">
+    <div class="card mini-card">
+      <div class="card-body">
+        <div class="text-muted">Angle</div>
+        <div class="h4" id="angle_deg">{{ '%.0f'|format(latest.angle_deg) if latest else '—' }}°</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2 col-sm-4">
+    <div class="card mini-card">
+      <div class="card-body">
+        <div class="text-muted">Mode</div>
+        <div class="h4" id="mode">{{ latest.mode if latest else '—' }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="card shadow-sm mb-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>Latest Telemetry</span>
+    <small class="text-muted" id="ts">{{ latest.ts if latest else '' }}</small>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-3"><div class="text-muted">Seq</div><div id="seq">{{ latest.seq if latest else '—' }}</div></div>
+      <div class="col-md-3"><div class="text-muted">Slot</div><div id="slot">{{ latest.slot if latest else '—' }}</div></div>
+      <div class="col-md-3"><div class="text-muted">Energy Today</div><div id="e_wh_today">{{ '%.2f'|format(latest.e_wh_today) if latest else '—' }} Wh</div></div>
+      <div class="col-md-3"><div class="text-muted">Moves Today</div><div id="move_count_today">{{ latest.move_count_today if latest else '—' }}</div></div>
+      <div class="col-md-3"><div class="text-muted">System 5V</div><div id="v_sys_5v">{{ '%.2f'|format(latest.v_sys_5v) if latest else '—' }} V</div></div>
+      <div class="col-md-3"><div class="text-muted">ACS Offset</div><div id="acs_offset_v">{{ '%.2f'|format(latest.acs_offset_v) if latest else '—' }} V</div></div>
+      <div class="col-md-3"><div class="text-muted">RSSI</div><div id="rssi">{{ latest.rssi if latest else '—' }} dBm</div></div>
+      <div class="col-md-3"><div class="text-muted">Fault Flags</div><div id="fault_flags">{{ latest.fault_flags if latest else '—' }}</div></div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/device_live.js') }}" data-device-id="{{ device.device_id }}"></script>
+{% endblock %}

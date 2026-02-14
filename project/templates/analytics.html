@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center mb-3 gap-3">
+  <div>
+    <h3 class="mb-0">Analytics & Optimizer</h3>
+    <small class="text-muted">Slot intelligence, movement efficiency, and net-gain decisions</small>
+  </div>
+  <div class="ms-auto text-end">
+    <div class="text-muted small">Device</div>
+    <div class="fw-semibold" id="analyticsDeviceLabel">{{ selected_device_id or 'No device' }}</div>
+  </div>
+</div>
+
+{% if not selected_device_id %}
+<div class="alert alert-info">No device selected. Pick a device from the selector to view analytics.</div>
+{% endif %}
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="fa-solid fa-border-all me-2"></i>Power Heatmap (Slot vs Angle)</span>
+        <small class="text-muted">Avg power per slot-angle</small>
+      </div>
+      <div class="card-body">
+        <canvas id="heatmapChart" height="240"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header"><i class="fa-solid fa-table-list me-2"></i>Best Angles by Slot</div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0" id="bestAnglesTable">
+            <thead class="table-light">
+              <tr>
+                <th>Slot</th>
+                <th>Best Angle</th>
+                <th>Confidence</th>
+                <th>Avg Power</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header"><i class="fa-solid fa-arrows-rotate me-2"></i>Movement Efficiency</div>
+      <div class="card-body">
+        <div class="efficiency-card">
+          <div class="text-muted small">Energy per move</div>
+          <div class="fs-4" id="cardEnergyPerMove">-- Wh</div>
+        </div>
+        <div class="efficiency-card">
+          <div class="text-muted small">Moves per hour</div>
+          <div class="fs-4" id="cardMovesPerHour">--</div>
+        </div>
+        <div class="efficiency-card">
+          <div class="text-muted small">Wasted moves</div>
+          <div class="fs-4" id="cardWastedMoves">-- %</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-8">
+    <div class="card shadow-sm h-100">
+      <div class="card-header"><i class="fa-solid fa-calendar-days me-2"></i>Daily Performance (7d)</div>
+      <div class="card-body">
+        <canvas id="dailyChart" height="180"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header"><i class="fa-solid fa-compass me-2"></i>Decision Table (Net Gain)</div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-striped mb-0" id="decisionTable">
+        <thead class="table-light">
+          <tr>
+            <th>Slot</th>
+            <th>Current Angle</th>
+            <th>Recommended</th>
+            <th>Expected Gain (Wh)</th>
+            <th>Motor Cost (Wh)</th>
+            <th>Net Gain (Wh)</th>
+            <th>Decision</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@1.4.0/dist/chartjs-chart-matrix.min.js"></script>
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3 class="mb-3">Device Settings - {{ device.device_id }}</h3>
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <div class="mb-2">API Key</div>
+    {% if api_key %}
+      <div class="alert alert-warning">
+        <div class="fw-bold">Copy the new API key now</div>
+        <div class="input-group mt-2">
+          <input type="text" class="form-control" id="apiKey" value="{{ api_key }}" readonly>
+          <button class="btn btn-outline-secondary" type="button" onclick="copyKey()">Copy</button>
+        </div>
+        <small class="text-danger">Save this key in firmware. It cannot be viewed again.</small>
+      </div>
+    {% else %}
+      <div class="d-flex align-items-center justify-content-between">
+        <div>{{ masked_key or 'Not set' }}</div>
+        <form method="post">
+          <button class="btn btn-outline-danger btn-sm" type="submit">Regenerate Key</button>
+        </form>
+      </div>
+      <small class="text-muted">Only the last 6 characters are shown after creation.</small>
+    {% endif %}
+  </div>
+</div>
+<script>
+  function copyKey() {
+    const el = document.getElementById('apiKey');
+    el.select();
+    el.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+  }
+</script>
+{% endblock %}

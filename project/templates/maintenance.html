@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center mb-3 gap-3">
+  <div>
+    <h3 class="mb-0">Maintenance History</h3>
+    <small class="text-muted">Cleaning and servicing timeline linked to performance</small>
+  </div>
+  <div class="ms-auto text-end">
+    <div class="text-muted small">Device</div>
+    <div class="fw-semibold">{{ selected_device_id or 'No device' }}</div>
+  </div>
+</div>
+
+{% if not selected_device_id %}
+<div class="alert alert-info">Select a device to view maintenance history.</div>
+{% endif %}
+
+<div class="card shadow-sm">
+  <div class="card-header"><i class="fa-solid fa-screwdriver-wrench me-2"></i>Cleaning Records</div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Before (Wh)</th>
+            <th>After (Wh)</th>
+            <th>Improvement %</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in logs %}
+          <tr>
+            <td>{{ item.cleaned_at.strftime('%Y-%m-%d %H:%M') if item.cleaned_at else '' }}</td>
+            <td class="text-capitalize">{{ item.cleaning_type.replace('_', ' ') }}</td>
+            <td>{{ '%.2f'|format(item.energy_before_wh) if item.energy_before_wh is not none else '--' }}</td>
+            <td>{{ '%.2f'|format(item.energy_after_wh) if item.energy_after_wh is not none else '--' }}</td>
+            <td>{{ '%.1f'|format(item.improvement_percent) if item.improvement_percent is not none else 'pending' }}</td>
+            <td>{{ item.note or '' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="text-muted">No maintenance records yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <small class="text-muted">Improvements calculated using telemetry two hours before and after each cleaning.</small>
+  </div>
+</div>
+{% endblock %}

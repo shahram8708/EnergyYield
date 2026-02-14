@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <h3 class="me-3">Devices</h3>
+  <span class="text-muted">Live fleet overview</span>
+</div>
+<div class="mb-3 d-flex justify-content-between align-items-center">
+  <a class="btn btn-primary" href="/claim_device"><i class="fa-solid fa-plus me-2"></i>Claim Device</a>
+  <small class="text-muted">Only your devices are shown below.</small>
+</div>
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Device ID</th>
+          <th>Last Seen</th>
+          <th>Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in devices %}
+        <tr>
+          <td class="fw-semibold">{{ d.device_id }}</td>
+          <td>{{ d.last_seen if d.last_seen else 'Never' }}</td>
+          <td>
+            {% if d.online %}
+            <span class="badge bg-success"><i class="fa-solid fa-circle me-1"></i>Online</span>
+            {% else %}
+            <span class="badge bg-secondary"><i class="fa-regular fa-circle me-1"></i>Offline</span>
+            {% endif %}
+          </td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/device/{{ d.device_id }}">View</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center text-muted py-4">No devices yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="mt-4">
+  <h5>Unassigned Devices</h5>
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <table class="table mb-0 align-middle">
+        <thead class="table-light">
+          <tr><th>Device ID</th><th>Registered</th></tr>
+        </thead>
+        <tbody>
+          {% for d in unassigned %}
+          <tr><td>{{ d.device_id }}</td><td>{{ d.registered_at }}</td></tr>
+          {% else %}
+          <tr><td colspan="2" class="text-muted text-center py-3">None</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

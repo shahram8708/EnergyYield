@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row">
+  <div class="col-lg-6">
+    <h3 class="mb-3">Claim Device</h3>
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label">Device ID</label>
+            <input type="text" class="form-control" name="device_id" placeholder="AEY-001" required>
+          </div>
+          <button class="btn btn-primary" type="submit">Claim</button>
+        </form>
+      </div>
+    </div>
+
+    {% if api_key and device %}
+    <div class="alert alert-warning">
+      <div class="fw-bold">Copy this API key now</div>
+      <div>Device {{ device.device_id }}</div>
+      <div class="input-group mt-2">
+        <input type="text" class="form-control" id="apiKey" value="{{ api_key }}" readonly>
+        <button class="btn btn-outline-secondary" type="button" onclick="copyKey()">Copy</button>
+      </div>
+      <small class="text-danger">Save this key in firmware. It cannot be viewed again.</small>
+    </div>
+    <script>
+      function copyKey() {
+        const el = document.getElementById('apiKey');
+        el.select();
+        el.setSelectionRange(0, 99999);
+        document.execCommand('copy');
+      }
+    </script>
+    {% endif %}
+  </div>
+  <div class="col-lg-6">
+    <h5>Unassigned Devices</h5>
+    <div class="card shadow-sm">
+      <div class="card-body p-0">
+        <table class="table mb-0 align-middle">
+          <thead class="table-light"><tr><th>Device ID</th><th>Registered</th></tr></thead>
+          <tbody>
+            {% for d in unassigned %}
+            <tr><td>{{ d.device_id }}</td><td>{{ d.registered_at }}</td></tr>
+            {% else %}
+            <tr><td colspan="2" class="text-muted text-center py-3">None</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

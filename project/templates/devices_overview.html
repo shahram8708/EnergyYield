@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <h3 class="me-3 mb-0">All Devices</h3>
+  <span class="text-muted">Fleet status at a glance</span>
+  <a class="btn btn-primary ms-auto" href="/claim_device"><i class="fa-solid fa-plus me-2"></i>Claim Device</a>
+</div>
+
+<div class="row g-3">
+  {% for item in devices %}
+  <div class="col-md-4 col-lg-3">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between mb-2">
+          <div>
+            <div class="text-muted small">Device ID</div>
+            <div class="fw-bold">{{ item.device.device_id }}</div>
+          </div>
+          {% if item.online %}
+            <span class="badge bg-success"><i class="fa-solid fa-circle me-1"></i>Online</span>
+          {% else %}
+            <span class="badge bg-secondary"><i class="fa-regular fa-circle me-1"></i>Offline</span>
+          {% endif %}
+        </div>
+        <div class="mb-2">
+          <div class="text-muted small">Today Energy</div>
+          <div class="fw-semibold">{{ '%.2f'|format(item.latest_energy) if item.latest_energy is not none else '--' }} Wh</div>
+        </div>
+        <div class="text-muted small mb-3">Last seen: {{ item.device.last_seen if item.device.last_seen else 'Never' }}</div>
+        <div class="d-flex gap-2">
+          <a class="btn btn-sm btn-outline-primary" href="/device/{{ item.device.device_id }}">Quick View</a>
+          <a class="btn btn-sm btn-outline-secondary" href="/device/{{ item.device.device_id }}/settings">Settings</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12">
+    <div class="alert alert-info">No devices yet. Claim or add one to begin monitoring.</div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

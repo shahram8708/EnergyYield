@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center mb-3 gap-3">
+  <div>
+    <h3 class="mb-0">Control Panel</h3>
+    <small class="text-muted">Send remote commands and adjust operating parameters</small>
+  </div>
+  <div class="ms-auto text-end">
+    <div class="text-muted small">Device</div>
+    <div class="fw-semibold" id="controlDeviceLabel">{{ selected_device_id or 'No device' }}</div>
+    <div class="small" id="deviceStatusBadge"><span class="badge bg-secondary">Unknown</span></div>
+  </div>
+</div>
+
+<div id="controlAlerts"></div>
+
+{% if not selected_device_id %}
+<div class="alert alert-info">No device selected. Choose a device from the selector to enable controls.</div>
+{% endif %}
+
+<div class="alert alert-warning d-none" id="offlineNotice">Device offline. Controls are disabled until it comes back online.</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="fa-solid fa-robot me-2"></i>Mode Control</span>
+        <button class="btn btn-sm btn-primary" id="modeSaveBtn">Save</button>
+      </div>
+      <div class="card-body">
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" name="modeOption" id="modeAuto" value="auto">
+          <label class="form-check-label" for="modeAuto">Auto</label>
+        </div>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" name="modeOption" id="modeManual" value="manual">
+          <label class="form-check-label" for="modeManual">Manual</label>
+        </div>
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="radio" name="modeOption" id="modeExplore" value="explore">
+          <label class="form-check-label" for="modeExplore">Explore</label>
+        </div>
+        <small class="text-muted">Choose operating strategy and save. Device receives a <code>set_mode</code> command.</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="fa-solid fa-arrows-to-circle me-2"></i>Angle Control</span>
+        <button class="btn btn-sm btn-outline-primary" id="sendAngleBtn">Send Move</button>
+      </div>
+      <div class="card-body">
+        <label for="angleSlider" class="form-label">Target Angle: <span class="fw-bold" id="angleValue">90&deg;</span></label>
+        <input type="range" class="form-range" id="angleSlider" min="30" max="150" step="1" value="90">
+        <small class="text-muted">Sends a <code>set_angle</code> command.</small>
+        <div class="mt-3">
+          <button class="btn btn-sm btn-outline-secondary" id="requestSnapshotBtn"><i class="fa-solid fa-camera me-2"></i>Request Snapshot</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="fa-solid fa-sliders me-2"></i>Thresholds</span>
+        <button class="btn btn-sm btn-primary" id="saveThresholdsBtn">Save settings</button>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label" for="minNetGainInput">Min Net Gain (Wh)</label>
+          <input type="number" class="form-control" id="minNetGainInput" step="0.1" placeholder="e.g. 10">
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="maxMovesInput">Max Moves per Hour</label>
+          <input type="number" class="form-control" id="maxMovesInput" step="1" placeholder="e.g. 12">
+        </div>
+        <small class="text-muted">Updates stored settings and issues a <code>set_thresholds</code> command.</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-lg-8">
+    <div class="card shadow-sm h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="fa-solid fa-list me-2"></i>Command History</span>
+        <small class="text-muted">Last 50 commands</small>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Command</th>
+                <th>Args</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="commandHistoryBody">
+              <tr><td colspan="4" class="text-muted">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header"><i class="fa-solid fa-broom me-2"></i>Maintenance</div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label" for="cleaningType">Action</label>
+          <select class="form-select" id="cleaningType">
+            <option value="manual">Manual Cleaning</option>
+            <option value="auto_wiper">Auto Wiper Activated</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="cleaningNote">Note</label>
+          <textarea class="form-control" id="cleaningNote" rows="3" placeholder="What was done?"></textarea>
+        </div>
+        <button class="btn btn-primary w-100" id="recordCleaningBtn">Record Cleaning</button>
+        <small class="text-muted d-block mt-2">Captured with pre/post energy for diagnostics.</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/control.js') }}"></script>
+{% endblock %}

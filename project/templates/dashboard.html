@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center mb-3 gap-3">
+  <div>
+    <h3 class="mb-0">Monitoring Dashboard</h3>
+    <small class="text-muted">Real-time performance for your fleet</small>
+  </div>
+  <div class="ms-auto text-end">
+    <div class="text-muted small">Device</div>
+    <div class="fw-semibold" id="dashboardDeviceLabel">{{ selected_device_id or 'No device' }}</div>
+  </div>
+</div>
+
+{% if not selected_device_id %}
+<div class="alert alert-info">No device selected. Claim or pick a device from the selector to start monitoring.</div>
+{% endif %}
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small">Voltage</div>
+        <div class="display-6" id="cardVoltage">--</div>
+        <div class="text-success small"><i class="fa-solid fa-bolt me-1"></i>Panel</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small">Current</div>
+        <div class="display-6" id="cardCurrent">--</div>
+        <div class="text-primary small"><i class="fa-solid fa-wave-square me-1"></i>Input</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small">Power</div>
+        <div class="display-6" id="cardPower">--</div>
+        <div class="text-warning small"><i class="fa-solid fa-chart-line me-1"></i>Live wattage</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small">Energy Today</div>
+        <div class="display-6" id="cardEnergy">--</div>
+        <div class="text-muted small">Accumulated Wh</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small">Angle</div>
+        <div class="display-6" id="cardAngle">--</div>
+        <div class="text-muted small">Degrees</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small">Mode</div>
+        <div class="display-6" id="cardMode">--</div>
+        <div class="text-muted small">Controller state</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small">Status</div>
+        <div class="display-6" id="cardStatus"><span class="badge bg-secondary">Offline</span></div>
+        <div class="text-muted small" id="cardLastSeen">--</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="fa-solid fa-plug me-2"></i>Live Power (24h)</span>
+        <small class="text-muted" id="latestTimestamp">--</small>
+      </div>
+      <div class="card-body">
+        <canvas id="powerChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="fa-solid fa-battery-half me-2"></i>Today Energy Progress</span>
+        <small class="text-muted" id="energyTargetLabel">Target configurable</small>
+      </div>
+      <div class="card-body">
+        <canvas id="energyProgressChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header"><i class="fa-solid fa-location-arrow me-2"></i>Angle Timeline (24h)</div>
+      <div class="card-body">
+        <canvas id="angleChart" height="140"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

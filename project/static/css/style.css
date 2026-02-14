@@ -1,0 +1,16 @@
+body { background-color: #f4f6f9; }
+.sidebar { min-width: 200px; }
+.mini-card { border-left: 4px solid #0d6efd; }
+.card { border: none; border-radius: 12px; }
+.card .card-header { background-color: #fff; border-bottom: 1px solid #eef0f3; }
+.navbar { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.display-6 { font-weight: 700; }
+#deviceSelector { min-width: 180px; }
+.card.shadow-sm { box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+.btn { border-radius: 10px; }
+.efficiency-card { padding: 8px 0; border-bottom: 1px dashed #eef0f3; }
+.efficiency-card:last-child { border-bottom: none; }
+.table-danger td { background-color: #f8d7da !important; }
+.recommendation-item { padding: 8px 0; border-bottom: 1px dashed #eef0f3; }
+.recommendation-item:last-child { border-bottom: none; }
+.list-group-item { border-color: #eef0f3; }

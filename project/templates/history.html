@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center mb-3 gap-3">
+  <div>
+    <h3 class="mb-0">Historical Analytics</h3>
+    <small class="text-muted">Replay any day by device</small>
+  </div>
+  <div class="ms-auto">
+    <div class="input-group">
+      <span class="input-group-text"><i class="fa-regular fa-calendar"></i></span>
+      <input type="date" class="form-control" id="historyDate" value="{{ default_date }}">
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+      <div class="text-muted small">Device</div>
+      <div class="fw-semibold" id="historyDeviceLabel">{{ selected_device_id or 'No device' }}</div>
+    </div>
+    <div class="text-muted small">Change date to reload charts automatically.</div>
+  </div>
+</div>
+
+{% if not selected_device_id %}
+<div class="alert alert-info">No device selected. Choose a device first.</div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header"><i class="fa-solid fa-plug-circle-bolt me-2"></i>Power vs Time</div>
+      <div class="card-body">
+        <canvas id="historyPowerChart" height="160"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header"><i class="fa-solid fa-compass-drafting me-2"></i>Angle vs Time</div>
+      <div class="card-body">
+        <canvas id="historyAngleChart" height="160"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header"><i class="fa-solid fa-bolt me-2"></i>Energy Cumulative</div>
+      <div class="card-body">
+        <canvas id="historyEnergyChart" height="160"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
