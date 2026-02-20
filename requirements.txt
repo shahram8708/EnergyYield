@@ -7,3 +7,4 @@ pandas
 google-genai
 markdown
 bleach
+email-validator
